@@ -73,7 +73,7 @@ class TrainUtils:
 	@classmethod
 	def startingTimeTrain(self, train_status):
 		#import pdb; pdb.set_trace()
-		print(train_status)
+		#print(train_status)
 		if train_status == None or 'fermate' not in train_status:
 			return None
 		f = train_status['fermate']
@@ -129,24 +129,35 @@ class TrainUtils:
 			partenzaProgrammata = f['partenza_teorica']
 			binarioArrivoProgrammato = f['binarioProgrammatoArrivoDescrizione']
 			binarioPartenzaProgrammato = f['binarioProgrammatoPartenzaDescrizione']
+			lastIsArrived = False
 			if not isFirstStation:
 				if arrivoReale != None:
 					text += 'arrived at ' + self.format_timestamp(arrivoReale, fmt='%H:%M')
 					text += ' | delay --> *' + str(ritardoArrivo) + ' min*'
 					text += '\n'
+					lastIsArrived = True
 				elif arrivoProgrammato != None:
+					if lastIsArrived:
+						text += '*' + '-'*60 + '*\n'
 					text += 'expected arrival at ' + self.format_timestamp(arrivoProgrammato, fmt='%H:%M')
 					text += ' |  binary ' + str(binarioArrivoProgrammato)
 					text += '\n'
+					lastIsArrived = False
+				#print(lastIsArrived)
 			if not isLastStation:
 				if partenzaReale != None:
 					text += 'started at ' + self.format_timestamp(partenzaReale, fmt='%H:%M')
 					text += ' | delay --> *' + str(ritardoPartenza) + ' min*'
 					text += '\n'
+					lastIsArrived = True
 				elif partenzaProgrammata != None:
+					if lastIsArrived:
+						text += '*' + '-'*60 + '*\n'
 					text += 'expected departure at ' + self.format_timestamp(arrivoProgrammato, fmt='%H:%M')
 					text += ' | binary ' + str(binarioPartenzaProgrammato)
 					text += '\n'
+					lastIsArrived = False
+				#print(lastIsArrived)
 
 		return text.strip()
 

@@ -143,9 +143,12 @@ class TrainManager:
 		daysOfWeek.sort()
 		if todayOfWeek <= max(daysOfWeek):
 			indexNextDay = next(x[0] for x in enumerate(daysOfWeek) if x[1] >= todayOfWeek)
-		else: indexNextDay = 0;
+			daysMore = daysOfWeek[indexNextDay] - todayOfWeek + 1
+		else:
+			indexNextDay = 0;
+			daysMore = daysOfWeek[indexNextDay] - todayOfWeek + 1 + 7
 
-		daysMore = daysOfWeek[indexNextDay] - todayOfWeek + 1
+		print(daysMore)
 		return startTime+daysMore*60*24*60, diff
 		#return self.getDateTimeFromTimeStep(startTime+daysMore*60*24), diff
 		#startTime + datetime.timedelta(daysMore, 0), diff

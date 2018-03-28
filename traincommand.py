@@ -13,7 +13,7 @@ from commandabstract import CommandAbstract
 
 class TrainCommand(CommandAbstract):
 
-	commands = ['add', 'remove', 'delete', 'edit', 'info', 'infoall', 'help', 'critical', 'notcritical']
+	commands = ['add', 'remove', 'delete', 'edit', 'info', 'infoall', 'help', 'state', 'status', 'critical', 'notcritical']
 	command_name = 'train'
 	command_prefix = command_name + ' '
 
@@ -77,6 +77,8 @@ class TrainCommand(CommandAbstract):
 			state_cmd = await self.add(params, sender, chat_id, config, stationName)
 		elif cmd == 'edit':
 			state_cmd = await self.edit(params, sender, chat_id, config)
+		elif cmd == 'state' or cmd == 'status':
+			state_cmd = await self.state(params, sender, chat_id, config)
 		elif cmd == 'info' and len(params) > 1:
 			state_cmd = await self.info(params, sender, chat_id, config)
 		elif (cmd == 'info' and len(params) == 1) or cmd == 'infoall':
@@ -112,6 +114,9 @@ class TrainCommand(CommandAbstract):
 	async def add(self, params, sender, chat_id, config, stationName):
 		# 0     |0   1    2		  3
 		# train |add 4909 1234567 critical
+		if len(params) < 2:
+			await sender.sendMessage('Syntax of the command for train number 2620 on Monday, Wedneday, Thursday and setting it critical is:\nadd 2620 134 critical')
+			return None
 		if self.trainExists(params, chat_id, config):
 			await sender.sendMessage('Train already added.\nUse edit to modify settings.')
 		else:
@@ -159,6 +164,9 @@ class TrainCommand(CommandAbstract):
 	async def edit(self, params, sender, chat_id, config):
 		# 0     |0    1    2		  3
 		# train |edit 4909 1234567 critical
+		if len(params) < 2:
+			await sender.sendMessage('Syntax of the command for train number 2620 on Monday, Wedneday, Thursday and setting it critical is:\nedit 2620 134 critical')
+			return None
 		if not self.trainExists(params, chat_id, config):
 			await sender.sendMessage('Train isn not added.\nUse add to start to track it.')
 			return None
@@ -182,6 +190,9 @@ class TrainCommand(CommandAbstract):
 	async def delete(self, params, sender, chat_id, config):
 		# 0     |0    1    2		  3
 		# train |edit 4909 1234567 critical
+		if len(params) < 2:
+			await sender.sendMessage('Syntax of the command for train number 2620 is:\ndelete 2620')
+			return None
 		if not self.trainExists(params, chat_id, config):
 			await sender.sendMessage('Train is not added.\nUse add to start to track it.')
 			return None
@@ -190,6 +201,34 @@ class TrainCommand(CommandAbstract):
 			train = config.getTrain(chat_id, trainNum)
 			if config.delTrain(chat_id, trainNum, save = True) != None:
 				await sender.sendMessage('Train' + trainNum + ' removed correctly.')
+		return None
+
+	@classmethod
+	async def state(self, params, sender, chat_id, config):
+		# 0     |0    1
+		# train |state 4909
+		if len(params) < 2:
+			await sender.sendMessage('Syntax of the command for train number 2620 is:\nstate 2620\nstatus 2620')
+			return None
+		if not self.trainExists(params, chat_id, config):
+			await sender.sendMessage('If you want to track regularly the train use command add')
+		else:
+			sID = TrainManager.getStationID(train)
+			#return None
+
+		trainNum = params[1]
+		exists, isunique, stationsName, stationsID = await TrainUtils.existsAndUnique(trainNum)
+		if not exists:
+			await sender.sendMessage('Train Number is wrong.')
+			return None
+		if not isunique:
+			await sender.sendMessage('More than one train with this number.\nYou can track it with add command')
+			return None
+		sID = stationsID
+
+		train = config.getTrain(chat_id, trainNum)
+		trainStatus = await TrainUtils.getTrainStatus(trainNum, sID)
+		await sender.sendMessage(TrainUtils.printAllStations(trainStatus), parse_mode='Markdown')
 		return None
 
 	@classmethod

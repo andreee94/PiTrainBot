@@ -121,25 +121,30 @@ class MyChatHandler(telepot.aio.helper.ChatHandler):
 		else: text = msg['text']
 
 		if self.state == None:
-			for c in self.commands:
-				if c.isCommandName(text):
-					if c.requiresPassword():
-						ask_password, self.new_user = MyLogin.ask_password(self.chat_id, config)
-						if ask_password:
-							self.state = 'wait_pwd'
-							self.waiting_command = text
-							print('--> password required.')
-							await self.sender.sendMessage('Send Raspberry Pi password:')
+			if text.lower() == 'help': # and self.state == None:
+				await self.sender.sendMessage(helpcommands(self.commands))
+			elif text.lower() == 'where':
+				await self.sender.sendMessage('No command is active.')
+			else:
+				for c in self.commands:
+					if c.isCommandName(text):
+						if c.requiresPassword():
+							ask_password, self.new_user = MyLogin.ask_password(self.chat_id, config)
+							if ask_password:
+								self.state = 'wait_pwd'
+								self.waiting_command = text
+								print('--> password required.')
+								await self.sender.sendMessage('Send Raspberry Pi password:')
+							else:
+								self.state = text
+								await self.sender.sendMessage('Command started: ' + text)
+								print('--> user already logged in.')
 						else:
 							self.state = text
 							await self.sender.sendMessage('Command started: ' + text)
-							print('--> user already logged in.')
-					else:
-						self.state = text
-						await self.sender.sendMessage('Command started: ' + text)
-			if self.state == None: # no command found
-				print('--> no command found.')
-				await self.sender.sendMessage('The command does not exist.')
+				if self.state == None: # no command found
+					print('--> no command found.')
+					await self.sender.sendMessage('The command does not exist.')
 		elif self.state == 'wait_pwd':
 			if text.lower() == 'quit' or text.lower() == 'exit' or text.lower() == 'cancel':
 				await self.sender.sendMessage('Ready to start a new command.')
@@ -159,6 +164,8 @@ class MyChatHandler(telepot.aio.helper.ChatHandler):
 				await self.sender.sendMessage('Exit from ' + self.state + ' command.')
 				self.state = None
 				self.state_cmd = None
+			elif text.lower() == 'where':
+				await self.sender.sendMessage('Command ' + self.state + ' is active.')
 			else:
 				for c in self.commands:
 					if c.isCommandName(self.state):
@@ -193,6 +200,13 @@ class MyChatHandler(telepot.aio.helper.ChatHandler):
 		#     await self.sender.sendMessage('Got it. Alarm is set at %.1f seconds from now.' % delay)
 		# except ValueError:
 		#     await self.sender.sendMessage('Not a number. No alarm set.')
+
+def helpcommands(commands):
+	text = 'The available commands are:'
+	for c in commands:
+		text += '\n-->' + c.getCommandName()
+	text += '\nType \'where\' to know which command is active.'
+	return text.strip()
 
 global config
 config = MyConfig()
